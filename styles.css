@@ -119,7 +119,7 @@
     --foreground: #000000;
     --card: #f4f4f5;
     --card-foreground: #000000;
-    --primary: #000000;
+    --primary: #2563eb;
     --primary-foreground: #ffffff;
     --secondary: #e4e4e7;
     --secondary-foreground: #000000;
@@ -127,9 +127,9 @@
     --muted-foreground: #71717a;
     --border: #e4e4e7;
     --input: #e4e4e7;
-    --ring: #000000;
-    --highlight: #000000;
-    --highlight-rgb: 0, 0, 0;
+    --ring: #2563eb;
+    --highlight: #2563eb;
+    --highlight-rgb: 37, 99, 235;
     --active-highlight: var(--highlight);
     --explicit-badge: #000000;
     --explicit-badge-foreground: #ffffff;
