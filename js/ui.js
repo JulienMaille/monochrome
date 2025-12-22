@@ -270,15 +270,21 @@ export class UIRenderer {
             titleEl.innerHTML = `${album.title} ${explicitBadge}`;
 
             const totalDuration = calculateTotalDuration(tracks);
-            const releaseDate = new Date(album.releaseDate);
-            const year = releaseDate.getFullYear();
-
-            const dateDisplay = window.innerWidth > 768
-                ? releaseDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-                : year;
+            let dateDisplay = '';
+            if (album.releaseDate) {
+                const releaseDate = new Date(album.releaseDate);
+                if (!isNaN(releaseDate.getTime())) {
+                    const year = releaseDate.getFullYear();
+                    dateDisplay = window.innerWidth > 768
+                        ? releaseDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+                        : year;
+                }
+            }
 
             metaEl.innerHTML =
-                `By <a href="#artist/${album.artist.id}">${album.artist.name}</a> • ${dateDisplay} • ${tracks.length} tracks • ${formatDuration(totalDuration)}`;
+                `By <a href="#artist/${album.artist.id}">${album.artist.name}</a>` +
+                (dateDisplay ? ` • ${dateDisplay}` : '') +
+                ` • ${tracks.length} tracks • ${formatDuration(totalDuration)}`;
 
             tracklistContainer.innerHTML = `
                 <div class="track-list-header">
