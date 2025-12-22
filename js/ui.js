@@ -57,13 +57,20 @@ export class UIRenderer {
 
     createAlbumCardHTML(album) {
         const explicitBadge = hasExplicitContent(album) ? this.createExplicitBadge() : '';
+        let yearDisplay = '';
+        if (album.releaseDate) {
+            const date = new Date(album.releaseDate);
+            if (!isNaN(date.getTime())) {
+                yearDisplay = ` • ${date.getFullYear()}`;
+            }
+        }
         return `
             <a href="#album/${album.id}" class="card">
                 <div class="card-image-wrapper">
                     <img src="${this.api.getCoverUrl(album.cover, '320')}" alt="${album.title}" class="card-image" loading="lazy">
                 </div>
                 <h3 class="card-title">${album.title} ${explicitBadge}</h3>
-                <p class="card-subtitle">Album • ${album.artist?.name ?? ''}</p>
+                <p class="card-subtitle">Album • ${album.artist?.name ?? ''}${yearDisplay}</p>
             </a>
         `;
     }
