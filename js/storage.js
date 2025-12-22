@@ -230,6 +230,7 @@ export const themeManager = {
 
     defaultThemes: {
         monochrome: {},
+        light: {},
         dark: {},
         ocean: {},
         purple: {},
