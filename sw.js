@@ -1,17 +1,17 @@
 //sw.js
 const CACHE_NAME = 'monochrome-v1';
 const urlsToCache = [
-    '/',
-    '/index.html',
-    '/styles.css',
-    '/js/app.js',
-    '/js/api.js',
-    '/js/player.js',
-    '/js/storage.js',
-    '/js/ui.js',
-    '/js/utils.js',
-    '/js/cache.js',
-    '/manifest.json'
+    './',
+    './index.html',
+    './styles.css',
+    './js/app.js',
+    './js/api.js',
+    './js/player.js',
+    './js/storage.js',
+    './js/ui.js',
+    './js/utils.js',
+    './js/cache.js',
+    './manifest.json'
 ];
 
 self.addEventListener('install', event => {
