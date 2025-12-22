@@ -40,6 +40,14 @@ export class UIRenderer {
         const trackArtists = getTrackArtists(track);
         const trackTitle = getTrackTitle(track);
 
+        let yearDisplay = '';
+        if (track.album && track.album.releaseDate) {
+            const date = new Date(track.album.releaseDate);
+            if (!isNaN(date.getTime())) {
+                yearDisplay = ` (${date.getFullYear()})`;
+            }
+        }
+
         return `
             <div class="track-item" data-track-id="${track.id}">
                 ${trackNumberHTML}
@@ -49,7 +57,7 @@ export class UIRenderer {
                             ${trackTitle}
                             ${explicitBadge}
                         </div>
-                        <div class="artist">${trackArtists}</div>
+                        <div class="artist">${trackArtists}${yearDisplay}</div>
                     </div>
                 </div>
                 <div class="track-item-duration">${formatTime(track.duration)}</div>
@@ -66,13 +74,20 @@ export class UIRenderer {
 
     createAlbumCardHTML(album) {
         const explicitBadge = hasExplicitContent(album) ? this.createExplicitBadge() : '';
+        let yearDisplay = '';
+        if (album.releaseDate) {
+            const date = new Date(album.releaseDate);
+            if (!isNaN(date.getTime())) {
+                yearDisplay = ` (${date.getFullYear()})`;
+            }
+        }
         return `
             <a href="#album/${album.id}" class="card">
                 <div class="card-image-wrapper">
                     <img src="${this.api.getCoverUrl(album.cover, '320')}" alt="${album.title}" class="card-image" loading="lazy">
                 </div>
                 <h3 class="card-title">${album.title} ${explicitBadge}</h3>
-                <p class="card-subtitle">Album • ${album.artist?.name ?? ''}</p>
+                <p class="card-subtitle">Album • ${album.artist?.name ?? ''}${yearDisplay}</p>
             </a>
         `;
     }
@@ -282,15 +297,21 @@ export class UIRenderer {
             titleEl.innerHTML = `${album.title} ${explicitBadge}`;
 
             const totalDuration = calculateTotalDuration(tracks);
-            const releaseDate = new Date(album.releaseDate);
-            const year = releaseDate.getFullYear();
-
-            const dateDisplay = window.innerWidth > 768
-                ? releaseDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-                : year;
+            let dateDisplay = '';
+            if (album.releaseDate) {
+                const releaseDate = new Date(album.releaseDate);
+                if (!isNaN(releaseDate.getTime())) {
+                    const year = releaseDate.getFullYear();
+                    dateDisplay = window.innerWidth > 768
+                        ? releaseDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+                        : year;
+                }
+            }
 
             metaEl.innerHTML =
-                `By <a href="#artist/${album.artist.id}">${album.artist.name}</a> • ${dateDisplay} • ${tracks.length} tracks • ${formatDuration(totalDuration)}`;
+                `By <a href="#artist/${album.artist.id}">${album.artist.name}</a>` +
+                (dateDisplay ? ` • ${dateDisplay}` : '') +
+                ` • ${tracks.length} tracks • ${formatDuration(totalDuration)}`;
 
             tracklistContainer.innerHTML = `
                 <div class="track-list-header">
