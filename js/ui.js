@@ -31,6 +31,14 @@ export class UIRenderer {
         const trackArtists = getTrackArtists(track);
         const trackTitle = getTrackTitle(track);
 
+        let yearDisplay = '';
+        if (track.album && track.album.releaseDate) {
+            const date = new Date(track.album.releaseDate);
+            if (!isNaN(date.getTime())) {
+                yearDisplay = ` (${date.getFullYear()})`;
+            }
+        }
+
         return `
             <div class="track-item" data-track-id="${track.id}">
                 ${trackNumberHTML}
@@ -40,7 +48,7 @@ export class UIRenderer {
                             ${trackTitle}
                             ${explicitBadge}
                         </div>
-                        <div class="artist">${trackArtists}</div>
+                        <div class="artist">${trackArtists}${yearDisplay}</div>
                     </div>
                 </div>
                 <div class="track-item-duration">${formatTime(track.duration)}</div>
@@ -61,7 +69,7 @@ export class UIRenderer {
         if (album.releaseDate) {
             const date = new Date(album.releaseDate);
             if (!isNaN(date.getTime())) {
-                yearDisplay = ` • ${date.getFullYear()}`;
+                yearDisplay = ` (${date.getFullYear()})`;
             }
         }
         return `
