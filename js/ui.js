@@ -422,6 +422,24 @@ async renderPlaylistPage(playlistId) {
                 this.createAlbumCardHTML(album)
             ).join('');
 
+            // Remove existing EPs/Singles section if present (to avoid duplicates on re-render)
+            const existingEpsSection = document.getElementById('artist-detail-eps-section');
+            if (existingEpsSection) existingEpsSection.remove();
+
+            if (artist.eps && artist.eps.length > 0) {
+                const epsSection = document.createElement('section');
+                epsSection.id = 'artist-detail-eps-section';
+                epsSection.className = 'content-section';
+                epsSection.innerHTML = `
+                    <h2 class="section-title">EPs & Singles</h2>
+                    <div class="card-grid" id="artist-detail-eps">
+                        ${artist.eps.map(ep => this.createAlbumCardHTML(ep)).join('')}
+                    </div>
+                `;
+                // Insert after albumsContainer's parent section
+                albumsContainer.closest('.content-section').after(epsSection);
+            }
+
             recentActivityManager.addArtist(artist);
 
             document.title = `${artist.name} - Monochrome`;

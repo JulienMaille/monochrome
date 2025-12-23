@@ -264,10 +264,30 @@ export class LosslessAPI {
         try {
             const response = await this.fetchWithRetry(`/search/?al=${encodeURIComponent(query)}`);
             const data = await response.json();
-            const normalized = this.normalizeSearchResponse(data, 'albums');
+
+            // Try to find both 'albums' and 'eps' sections
+            const albumsSection = this.findSearchSection(data, 'albums', new Set()) || { items: [] };
+            const epsSection = this.findSearchSection(data, 'eps', new Set()) || { items: [] };
+
+            // Combine items and deduplicate by ID
+            const allItems = [
+                ...(albumsSection.items || []),
+                ...(epsSection.items || [])
+            ];
+
+            const uniqueItemsMap = new Map();
+            allItems.forEach(item => {
+                if (item && item.id) {
+                    uniqueItemsMap.set(item.id, item);
+                }
+            });
+            const uniqueItems = Array.from(uniqueItemsMap.values());
+
             const result = {
-                ...normalized,
-                items: normalized.items.map(a => this.prepareAlbum(a))
+                items: uniqueItems.map(a => this.prepareAlbum(a)),
+                limit: (albumsSection.limit || 0) + (epsSection.limit || 0),
+                offset: albumsSection.offset || 0,
+                totalNumberOfItems: (albumsSection.totalNumberOfItems || 0) + (epsSection.totalNumberOfItems || 0)
             };
 
             await this.cache.set('search_albums', query, result);
@@ -441,15 +461,18 @@ export class LosslessAPI {
 
         entries.forEach(entry => scan(entry));
 
-        const albums = Array.from(albumMap.values()).sort((a, b) =>
+        const allAlbums = Array.from(albumMap.values()).sort((a, b) =>
             new Date(b.releaseDate || 0) - new Date(a.releaseDate || 0)
         );
+
+        const albums = allAlbums.filter(a => !a.type || a.type === 'ALBUM');
+        const eps = allAlbums.filter(a => a.type === 'EP' || a.type === 'SINGLE');
 
         const tracks = Array.from(trackMap.values())
             .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
             .slice(0, 10);
 
-        const result = { ...artist, albums, tracks };
+        const result = { ...artist, albums, eps, tracks };
 
         await this.cache.set('artist', artistId, result);
         return result;
