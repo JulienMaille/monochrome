@@ -333,7 +333,7 @@ export class LosslessAPI {
                 if (track.album && track.album.releaseDate) {
                     album = { ...album, releaseDate: track.album.releaseDate };
                 } else if (track.streamStartDate) {
-                    album = { ...album, releaseDate: track.streamStartDate };
+                    album = { ...album, releaseDate: track.streamStartDate.split('T')[0] };
                 }
             }
         }
