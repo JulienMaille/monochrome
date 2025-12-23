@@ -87,7 +87,7 @@ export class UIRenderer {
                     <img src="${this.api.getCoverUrl(album.cover, '320')}" alt="${album.title}" class="card-image" loading="lazy">
                 </div>
                 <h3 class="card-title">${album.title} ${explicitBadge}</h3>
-                <p class="card-subtitle">Album • ${album.artist?.name ?? ''}${yearDisplay}</p>
+                <p class="card-subtitle">${album.artist?.name ?? ''}${yearDisplay}</p>
             </a>
         `;
     }
@@ -99,7 +99,6 @@ export class UIRenderer {
                     <img src="${this.api.getArtistPictureUrl(artist.picture, '320')}" alt="${artist.name}" class="card-image" loading="lazy">
                 </div>
                 <h3 class="card-title">${artist.name}</h3>
-                <p class="card-subtitle">Artist</p>
             </a>
         `;
     }
@@ -124,7 +123,7 @@ export class UIRenderer {
             <div class="skeleton-card ${isArtist ? 'artist' : ''}">
                 <div class="skeleton skeleton-card-image"></div>
                 <div class="skeleton skeleton-card-title"></div>
-                <div class="skeleton skeleton-card-subtitle"></div>
+                ${!isArtist ? '<div class="skeleton skeleton-card-subtitle"></div>' : ''}
             </div>
         `;
     }
