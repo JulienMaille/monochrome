@@ -5,6 +5,7 @@ import { showNotification, downloadTrackWithMetadata } from './downloads.js';
 import { lyricsSettings } from './storage.js';
 import { updateTabTitle } from './router.js';
 import { db } from './db.js';
+import { syncManager } from './firebase/sync.js';
 
 export function initializePlayerEvents(player, audioPlayer, scrobbler, ui) {
     const playPauseBtn = document.querySelector('.play-pause-btn');
@@ -72,6 +73,7 @@ export function initializePlayerEvents(player, audioPlayer, scrobbler, ui) {
             if (currentTime >= 10 && player.currentTrack && player.currentTrack.id !== historyLoggedTrackId) {
                 historyLoggedTrackId = player.currentTrack.id;
                 await db.addToHistory(player.currentTrack);
+                syncManager.syncHistoryItem(player.currentTrack);
                 
                 if (window.location.hash === '#recent') {
                     ui.renderRecentPage();
@@ -328,6 +330,7 @@ export async function handleTrackAction(action, item, player, api, lyricsManager
         await downloadTrackWithMetadata(item, player.quality, api, lyricsManager);
     } else if (action === 'toggle-like') {
         const added = await db.toggleFavorite(type, item);
+        syncManager.syncLibraryItem(type, item, added);
         
         // Update all instances of this item's like button on the page
         const id = type === 'playlist' ? item.uuid : item.id;

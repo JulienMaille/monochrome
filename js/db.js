@@ -83,16 +83,16 @@ export class MusicDatabase {
         // Add new entry
         store.put(entry);
 
-        // Trim to 100
+        // Trim to 1000
         const index = store.index('timestamp');
         const countRequest = index.count();
 
         countRequest.onsuccess = () => {
-            if (countRequest.result > 100) {
+            if (countRequest.result > 1000) {
                 // Get oldest keys
                 const cursorRequest = index.openCursor();
                 let deleted = 0;
-                const toDelete = countRequest.result - 100;
+                const toDelete = countRequest.result - 1000;
 
                 cursorRequest.onsuccess = (e) => {
                     const cursor = e.target.result;
@@ -187,7 +187,7 @@ export class MusicDatabase {
                 album: item.album ? {
                     id: item.album.id,
                     cover: item.album.cover,
-                    releaseDate: item.album.releaseDate
+                    releaseDate: item.album.releaseDate || null
                 } : null,
                 // Fallback date
                 streamStartDate: item.streamStartDate,
@@ -251,15 +251,19 @@ export class MusicDatabase {
         return data;
     }
 
-    async importData(data) {
-        // Clear existing? Or merge? Prompt says "Sync" or "Export/Import".
+    async importData(data, clear = false) {
         // Let's merge by put (replaces if ID exists).
         const db = await this.open();
         
         const importStore = async (storeName, items) => {
-            if (!items || !Array.isArray(items)) return;
             const transaction = db.transaction(storeName, 'readwrite');
             const store = transaction.objectStore(storeName);
+            
+            if (clear) {
+                store.clear();
+            }
+
+            if (!items || !Array.isArray(items)) return;
             for (const item of items) {
                 store.put(item);
             }
