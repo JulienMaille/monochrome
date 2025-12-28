@@ -1,14 +1,10 @@
 //js/settings
 import { themeManager, lastFMStorage, nowPlayingSettings, lyricsSettings, backgroundSettings, trackListSettings } from './storage.js';
 import { db } from './db.js';
-import { authManager } from './firebase/auth.js';
-import { syncManager } from './firebase/sync.js';
-import { initializeFirebaseSettingsUI } from './firebase/config.js';
 
 export function initializeSettings(scrobbler, player, api, ui) {
-    // Initialize Firebase UI & Settings
-    authManager.updateUI(authManager.user);
-    initializeFirebaseSettingsUI();
+    // Initialize Gun Auth UI
+    initializeAuthUI();
 
     const lastfmConnectBtn = document.getElementById('lastfm-connect-btn');
     const lastfmStatus = document.getElementById('lastfm-status');
@@ -325,12 +321,101 @@ export function initializeSettings(scrobbler, player, api, ui) {
                 const data = JSON.parse(event.target.result);
                 await db.importData(data);
                 alert('Library imported successfully!');
-                window.location.reload(); // Simple way to refresh all state
+                // window.location.reload(); // db.importData should trigger sync listener -> notifyChange -> refresh UI, so reload might not be needed? But db.js impl of importData does PUTs.
+                // However, if large import, reload is safer.
+                window.location.reload();
             } catch (err) {
                 console.error('Import failed:', err);
                 alert('Failed to import library. Please check the file format.');
             }
         };
         reader.readAsText(file);
+    });
+}
+
+function initializeAuthUI() {
+    const authForms = document.getElementById('auth-forms');
+    const authUserInfo = document.getElementById('auth-user-info');
+    const loginBtn = document.getElementById('auth-login-btn');
+    const registerBtn = document.getElementById('auth-register-btn');
+    const logoutBtn = document.getElementById('auth-logout-btn');
+    const usernameInput = document.getElementById('auth-username');
+    const passwordInput = document.getElementById('auth-password');
+    const currentUsername = document.getElementById('current-username');
+
+    if (!authForms || !loginBtn) return;
+
+    // Check login state
+    const updateUIState = () => {
+        if (db.isLoggedIn()) {
+            authForms.style.display = 'none';
+            authUserInfo.style.display = 'flex';
+            currentUsername.textContent = db.getUsername();
+        } else {
+            authForms.style.display = 'block';
+            authUserInfo.style.display = 'none';
+            currentUsername.textContent = '';
+        }
+    };
+
+    // Initial check (give Gun a moment to recall session)
+    setTimeout(updateUIState, 500);
+
+    loginBtn.addEventListener('click', async () => {
+        const user = usernameInput.value.trim();
+        const pass = passwordInput.value.trim();
+
+        if (!user || !pass) {
+            alert("Please enter username and password.");
+            return;
+        }
+
+        loginBtn.disabled = true;
+        loginBtn.textContent = "Logging in...";
+
+        try {
+            await db.login(user, pass);
+            alert("Logged in successfully!");
+            updateUIState();
+        } catch (e) {
+            alert("Login failed: " + e.message);
+        } finally {
+            loginBtn.disabled = false;
+            loginBtn.textContent = "Login";
+        }
+    });
+
+    registerBtn.addEventListener('click', async () => {
+        const user = usernameInput.value.trim();
+        const pass = passwordInput.value.trim();
+
+        if (!user || !pass) {
+            alert("Please enter username and password.");
+            return;
+        }
+
+        if (pass.length < 8) {
+            alert("Password must be at least 8 characters.");
+            return;
+        }
+
+        registerBtn.disabled = true;
+        registerBtn.textContent = "Creating...";
+
+        try {
+            await db.createUser(user, pass);
+            alert("Account created and logged in!");
+            updateUIState();
+        } catch (e) {
+             alert("Registration failed: " + e.message);
+        } finally {
+            registerBtn.disabled = false;
+            registerBtn.textContent = "Register";
+        }
+    });
+
+    logoutBtn.addEventListener('click', () => {
+        db.logout();
+        updateUIState();
     });
 }

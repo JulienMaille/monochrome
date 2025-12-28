@@ -345,30 +345,25 @@
 
                     <div class="setting-item">
                         <div class="info">
-                            <span class="label">Firebase Configuration</span>
-                            <span class="description">Paste your Firebase Config JSON here to enable sync.</span>
+                            <span class="label">Account & Sync</span>
+                            <span class="description" id="sync-status">Sign in to sync your library across devices (Decentralized)</span>
                         </div>
-                        <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; max-width: 400px;">
-                            <textarea id="firebase-config-input" class="template-input" rows="5" placeholder='{ "apiKey": "...", "authDomain": "...", ... }'></textarea>
-                            <div style="display: flex; gap: 0.5rem;">
-                                <button id="save-firebase-config-btn" class="btn-secondary">Save & Reload</button>
-                                <button id="share-firebase-config-btn" class="btn-secondary">Share</button>
-                                <button id="clear-firebase-config-btn" class="btn-secondary danger">Clear Config</button>
+                        <div id="auth-controls" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; max-width: 300px;">
+                            <div id="auth-forms">
+                                <input type="text" id="auth-username" class="template-input" placeholder="Username" autocomplete="username">
+                                <input type="password" id="auth-password" class="template-input" placeholder="Password" autocomplete="current-password" style="margin-top: 0.5rem;">
+                                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                                    <button id="auth-login-btn" class="btn-secondary">Login</button>
+                                    <button id="auth-register-btn" class="btn-secondary">Register</button>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-
-                    <div class="setting-item">
-                        <div class="info">
-                            <span class="label">Sync & Backup (Beta)</span>
-                            <span class="description" id="firebase-status">Sync your library across devices</span>
-                            <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem; align-items: center;">
-                                <img id="firebase-user-avatar" src="" style="width: 24px; height: 24px; border-radius: 50%; display: none;" onerror="this.style.display='none'" onload="this.style.display='block'">
-                                <span id="firebase-user-name" style="font-size: 0.85rem; color: var(--foreground);"></span>
+                            <div id="auth-user-info" style="display: none; flex-direction: column; gap: 0.5rem;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <span class="label" style="font-size: 0.9rem;">Logged in as:</span>
+                                    <span id="current-username" style="font-weight: bold;"></span>
+                                </div>
+                                <button id="auth-logout-btn" class="btn-secondary danger">Logout</button>
                             </div>
-                        </div>
-                        <div id="firebase-controls">
-                            <button id="firebase-connect-btn" class="btn-secondary">Connect with Google</button>
                         </div>
                     </div>
 
@@ -596,6 +591,8 @@
             </div>
         </footer>
     </div>
+    <script src="js/gun/gun.js"></script>
+    <script src="js/gun/sea.js"></script>
     <script type="module" src="js/app.js"></script>
 </body>
 </html>

@@ -598,7 +598,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 3000);
     }
 
-    // Listener for Firebase Sync updates
+    // Listener for Library Sync updates (Gun.js)
     window.addEventListener('library-changed', () => {
         const hash = window.location.hash;
         if (hash === '#library') {
