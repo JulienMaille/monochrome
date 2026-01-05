@@ -73,10 +73,57 @@
             <div class="modal-content" style="background: var(--card); padding: 2rem; border-radius: var(--radius); max-width: 400px; width: 90%;">
                 <h3 id="playlist-modal-title">Create Playlist</h3>
                 <input type="text" id="playlist-name-input" placeholder="Playlist name" style="width: 100%; margin: 1rem 0; padding: 0.5rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--background); color: var(--foreground);">
-                <div class="modal-actions" style="display: flex; gap: 0.5rem; justify-content: flex-end;">
-                    <button id="playlist-modal-cancel" class="btn-secondary">Cancel</button>
-                    <button id="playlist-modal-save" class="btn-primary">Save</button>
+
+                <div class="setting-item" style="margin-bottom: 1rem; padding: 0; border: none; background: transparent;">
+                    <div class="info">
+                        <span class="label">Public Playlist</span>
+                        <span class="description">Visible to anyone with the link</span>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="playlist-public-toggle">
+                        <span class="slider"></span>
+                    </label>
                 </div>
+
+                <div class="modal-actions" style="display: flex; gap: 0.5rem; justify-content: space-between; align-items: center;">
+                    <button id="playlist-share-btn" class="btn-secondary" style="display: none;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                        Share
+                    </button>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button id="playlist-modal-cancel" class="btn-secondary">Cancel</button>
+                        <button id="playlist-modal-save" class="btn-primary">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="spotify-import-modal" class="modal" style="display: none;">
+        <div class="modal-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+            <div class="modal-content" style="background: var(--card); padding: 2rem; border-radius: var(--radius); max-width: 500px; width: 90%;">
+                <h3>Import from Spotify</h3>
+                <p style="color: var(--muted-foreground); margin-bottom: 1rem; font-size: 0.9rem;">
+                    Paste a Spotify Playlist URL below. We'll search our library for matching tracks.
+                    <br><strong>Note:</strong> Not all tracks may be available.
+                </p>
+                <input type="text" id="spotify-url-input" placeholder="https://open.spotify.com/playlist/..." style="width: 100%; margin-bottom: 1rem; padding: 0.5rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--background); color: var(--foreground);">
+                <div class="modal-actions" style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                    <button id="spotify-import-cancel" class="btn-secondary">Cancel</button>
+                    <button id="spotify-import-confirm" class="btn-primary">Import</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="import-progress-modal" class="modal" style="display: none;">
+        <div class="modal-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+            <div class="modal-content" style="background: var(--card); padding: 2rem; border-radius: var(--radius); max-width: 400px; width: 90%; text-align: center;">
+                <h3>Importing Playlist</h3>
+                <div style="width: 100%; background: var(--muted); height: 8px; border-radius: 4px; margin: 1.5rem 0; overflow: hidden;">
+                    <div id="import-progress-bar" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.3s ease;"></div>
+                </div>
+                <p id="import-progress-text" style="color: var(--muted-foreground); font-size: 0.9rem;">Initializing...</p>
             </div>
         </div>
     </div>
@@ -212,7 +259,16 @@
 
             <div id="page-library" class="page">
                 <section class="content-section">
-                    <h2 class="section-title">My Playlists <button id="create-playlist-btn" class="btn-secondary">Create Playlist</button></h2>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h2 class="section-title" style="margin-bottom: 0;">My Playlists</h2>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button id="import-spotify-btn" class="btn-secondary">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
+                                Import Spotify
+                            </button>
+                            <button id="create-playlist-btn" class="btn-secondary">Create Playlist</button>
+                        </div>
+                    </div>
                     <div class="card-grid" id="my-playlists-container"></div>
                 </section>
 

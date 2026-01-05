@@ -274,6 +274,37 @@ export class SyncManager {
         }
         await remove(this.userRef);
     }
+
+    // Public Playlist API
+
+    async publishPlaylist(playlist) {
+        if (!this.user) throw new Error("Not authenticated");
+
+        // Ensure playlist has necessary data
+        const publicData = {
+            ...db._minifyItem('playlist', playlist),
+            uid: this.user.uid,
+            originalId: playlist.id,
+            publishedAt: Date.now(),
+            tracks: playlist.tracks ? playlist.tracks.map(t => db._minifyItem('track', t)) : []
+        };
+
+        // Use a global 'public_playlists' node
+        const publicRef = ref(database, `public_playlists/${playlist.id}`);
+        await set(publicRef, publicData);
+    }
+
+    async unpublishPlaylist(playlistId) {
+        if (!this.user) throw new Error("Not authenticated");
+        const publicRef = ref(database, `public_playlists/${playlistId}`);
+        await remove(publicRef);
+    }
+
+    async getPublicPlaylist(playlistId) {
+        const publicRef = ref(database, `public_playlists/${playlistId}`);
+        const snapshot = await get(publicRef);
+        return snapshot.val();
+    }
 }
 
 export const syncManager = new SyncManager();
