@@ -14,7 +14,6 @@ import { debounce, SVG_PLAY } from './utils.js';
 import { sidePanelManager } from './side-panel.js';
 import { db } from './db.js';
 import { syncManager } from './firebase/sync.js';
-import { importSpotifyPlaylist } from './spotify-import.js';
 import { registerSW } from 'virtual:pwa-register';
 
 function initializeCasting(audioPlayer, castBtn) {
@@ -246,47 +245,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('playlist-public-toggle')?.addEventListener('change', (e) => {
         const shareBtn = document.getElementById('playlist-share-btn');
         if (shareBtn) shareBtn.style.display = e.target.checked ? 'flex' : 'none';
-    });
-
-    // Spotify Import Logic
-    document.getElementById('import-spotify-btn')?.addEventListener('click', () => {
-        const modal = document.getElementById('spotify-import-modal');
-        modal.style.display = 'flex';
-        document.getElementById('spotify-url-input').focus();
-    });
-
-    document.getElementById('spotify-import-cancel')?.addEventListener('click', () => {
-        document.getElementById('spotify-import-modal').style.display = 'none';
-    });
-
-    document.getElementById('spotify-import-confirm')?.addEventListener('click', async () => {
-        const url = document.getElementById('spotify-url-input').value.trim();
-        if (!url) return;
-
-        const modal = document.getElementById('spotify-import-modal');
-        const progressModal = document.getElementById('import-progress-modal');
-        const progressBar = document.getElementById('import-progress-bar');
-        const progressText = document.getElementById('import-progress-text');
-
-        modal.style.display = 'none';
-        progressModal.style.display = 'flex';
-        progressBar.style.width = '0%';
-        progressText.textContent = 'Initializing...';
-
-        try {
-            await importSpotifyPlaylist(url, api, (percent, msg) => {
-                progressBar.style.width = `${percent}%`;
-                progressText.textContent = msg;
-            });
-
-            progressModal.style.display = 'none';
-            alert('Playlist imported successfully!');
-            ui.renderLibraryPage();
-        } catch (error) {
-            console.error('Import failed:', error);
-            progressModal.style.display = 'none';
-            alert(`Import failed: ${error.message}`);
-        }
     });
 
     document.getElementById('close-fullscreen-cover-btn')?.addEventListener('click', () => {
