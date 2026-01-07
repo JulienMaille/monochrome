@@ -24,5 +24,9 @@
   "devDependencies": {
     "vite": "^7.3.0",
     "vite-plugin-pwa": "^1.2.0"
+  },
+  "dependencies": {
+    "client-zip": "^2.5.0",
+    "streamsaver": "^2.0.6"
   }
 }
