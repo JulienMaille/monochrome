@@ -491,7 +491,7 @@ export async function handleTrackAction(action, item, player, api, lyricsManager
         const modal = document.createElement('div');
         modal.className = 'playlist-select-modal';
         modal.innerHTML = `
-            <div class="modal-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;">
+            <div class="modal-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3100; display: flex; align-items: center; justify-content: center;">
                 <div class="modal-content" style="background: var(--card); padding: 2rem; border-radius: var(--radius); max-width: 400px; width: 90%;">
                     <h3>Add to Playlist</h3>
                     <div id="playlist-list" style="margin: 1rem 0; max-height: 200px; overflow-y: auto;">
