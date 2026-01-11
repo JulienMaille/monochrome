@@ -1152,7 +1152,11 @@ async function parseCSV(csvText, api, onProgress) {
 
                     // Clean title helpers
                     // Remove " - ", "(feat. ...)", "[feat. ...]"
-                    const cleanTitle = (t) => t.split(' - ')[0].replace(/\s*[\(\[]feat\.?.*?[\)\]]/i, '').trim();
+                    const cleanTitle = (t) =>
+                        t
+                            .split(' - ')[0]
+                            .replace(/\s*[\(\[]feat\.?.*?[\)\]]/i, '')
+                            .trim();
                     const cleanedTitle = cleanTitle(trackTitle);
                     const isTitleCleaned = cleanedTitle !== trackTitle;
 
