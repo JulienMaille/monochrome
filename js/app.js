@@ -1108,6 +1108,7 @@ async function parseCSV(csvText, api, onProgress) {
                             .normalize('NFD')
                             .replace(/[\u0300-\u036f]/g, '')
                             .toLowerCase()
+                            .replace(/\./g, '') // Remove dots for acronyms (B.J. -> BJ)
                             .replace(/[^\w\s]/g, ' ')
                             .replace(/\s+/g, ' ')
                             .trim();
@@ -1149,6 +1150,12 @@ async function parseCSV(csvText, api, onProgress) {
                         return true;
                     };
 
+                    // Clean title helpers
+                    // Remove " - ", "(feat. ...)", "[feat. ...]"
+                    const cleanTitle = (t) => t.split(' - ')[0].replace(/\s*[\(\[]feat\.?.*?[\)\]]/i, '').trim();
+                    const cleanedTitle = cleanTitle(trackTitle);
+                    const isTitleCleaned = cleanedTitle !== trackTitle;
+
                     // 1. Initial Search: Title + All Artists + Album (most specific)
                     if (!foundTrack) {
                         let searchQuery = `${trackTitle} ${artistNames}`;
@@ -1168,6 +1175,28 @@ async function parseCSV(csvText, api, onProgress) {
                                 const firstResult = searchResults.items[0];
                                 if (isValidMatch(firstResult, trackTitle, artistNames, albumName)) {
                                     foundTrack = firstResult;
+                                }
+                            }
+                        }
+                    }
+
+                    // 7. Retry: Aggressive Clean Title (remove all (...) and [...]) + Main Artist
+                    const cleanTitleAggressive = (t) => t.replace(/\s*[\(\[].*?[\)\]]/g, '').trim();
+                    const aggressiveTitle = cleanTitleAggressive(trackTitle);
+                    const isAggressiveDifferent = aggressiveTitle !== trackTitle && aggressiveTitle !== cleanedTitle;
+
+                    if (!foundTrack && isAggressiveDifferent) {
+                        const mainArtist = (artistNames || '').split(',')[0].trim();
+                        const searchQuery = `${aggressiveTitle} ${mainArtist}`;
+                        const searchResults = await api.searchTracks(searchQuery);
+
+                        if (searchResults.items && searchResults.items.length > 0) {
+                            for (const result of searchResults.items) {
+                                // Match against aggressive title, ignore album
+                                if (isValidMatch(result, aggressiveTitle, mainArtist, null)) {
+                                    foundTrack = result;
+                                    console.log(`Found (Retry 6 - Aggressive Clean): ${trackTitle}`);
+                                    break;
                                 }
                             }
                         }
@@ -1208,16 +1237,6 @@ async function parseCSV(csvText, api, onProgress) {
                             }
                         }
                     }
-
-                    // Clean title for retry strategies
-                    // Remove " - ", "(feat. ...)", "[feat. ...]"
-                    const cleanTitle = (t) =>
-                        t
-                            .split(' - ')[0]
-                            .replace(/\s*[\(\[]feat\.?.*?[\)\]]/i, '')
-                            .trim();
-                    const cleanedTitle = cleanTitle(trackTitle);
-                    const isTitleCleaned = cleanedTitle !== trackTitle;
 
                     // 4. Retry: Cleaned Title + Main Artist + Album
                     if (!foundTrack && isTitleCleaned) {
