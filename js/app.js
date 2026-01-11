@@ -1115,7 +1115,7 @@ async function parseCSV(csvText, api, onProgress) {
                     if (isrc) {
                         strategies.push({
                             name: 'ISRC',
-                            query: isrc
+                            query: isrc,
                         });
                     }
 
@@ -1133,7 +1133,10 @@ async function parseCSV(csvText, api, onProgress) {
 
                     // 4. Title + Main Artist (NO ALBUM) - Crucial for album naming mismatches
                     if (mainArtist) {
-                        strategies.push({ name: 'Title + Main Artist (No Album)', query: `${trackTitle} ${mainArtist}` });
+                        strategies.push({
+                            name: 'Title + Main Artist (No Album)',
+                            query: `${trackTitle} ${mainArtist}`,
+                        });
                     }
 
                     // 5. Cleaned Title + Main Artist + Album
