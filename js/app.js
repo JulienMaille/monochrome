@@ -1105,6 +1105,8 @@ async function parseCSV(csvText, api, onProgress) {
                     // Helper: Normalize strings for fuzzy matching
                     const normalize = (str) =>
                         str
+                            .normalize('NFD')
+                            .replace(/[\u0300-\u036f]/g, '')
                             .toLowerCase()
                             .replace(/[^\w\s]/g, ' ')
                             .replace(/\s+/g, ' ')
@@ -1209,11 +1211,7 @@ async function parseCSV(csvText, api, onProgress) {
 
                     // Clean title for retry strategies
                     // Remove " - ", "(feat. ...)", "[feat. ...]"
-                    const cleanTitle = (t) =>
-                        t
-                            .split(' - ')[0]
-                            .replace(/\s*[\(\[]feat\.?.*?[\)\]]/i, '')
-                            .trim();
+                    const cleanTitle = (t) => t.split(' - ')[0].replace(/\s*[\(\[]feat\.?.*?[\)\]]/i, '').trim();
                     const cleanedTitle = cleanTitle(trackTitle);
                     const isTitleCleaned = cleanedTitle !== trackTitle;
 
