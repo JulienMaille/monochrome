@@ -1105,67 +1105,67 @@ async function parseCSV(csvText, api, onProgress) {
 
                 try {
                     let foundTrack = null;
+                    const mainArtist = (artistNames || '').split(',')[0].trim();
+                    // Clean title: remove " - Something" and also text in brackets like " (feat. ...)" if needed
+                    // For now, keep the simple split(' - ') as it covers most cases reported
+                    const cleanedTitle = trackTitle.split(' - ')[0].trim();
+                    const strategies = [];
 
-                    // 0. If ISRC provided, try ISRC first (Apple CSVs include ISRC)
+                    // 1. ISRC (Highest priority)
                     if (isrc) {
+                        strategies.push({
+                            name: 'ISRC',
+                            query: isrc
+                        });
+                    }
+
+                    // 2. Exact Match: Title + All Artists + Album
+                    let exactQuery = `${trackTitle} ${artistNames}`;
+                    if (albumName) exactQuery += ` ${albumName}`;
+                    strategies.push({ name: 'Exact Match', query: exactQuery });
+
+                    // 3. Main Artist + Album
+                    if (mainArtist && mainArtist !== artistNames) {
+                        let query = `${trackTitle} ${mainArtist}`;
+                        if (albumName) query += ` ${albumName}`;
+                        strategies.push({ name: 'Main Artist + Album', query: query });
+                    }
+
+                    // 4. Title + Main Artist (NO ALBUM) - Crucial for album naming mismatches
+                    if (mainArtist) {
+                        strategies.push({ name: 'Title + Main Artist (No Album)', query: `${trackTitle} ${mainArtist}` });
+                    }
+
+                    // 5. Cleaned Title + Main Artist + Album
+                    if (cleanedTitle && cleanedTitle !== trackTitle) {
+                        let query = `${cleanedTitle} ${mainArtist}`;
+                        if (albumName) query += ` ${albumName}`;
+                        strategies.push({ name: 'Cleaned Title + Album', query: query });
+                    }
+
+                    // 6. Cleaned Title + Main Artist (NO ALBUM)
+                    if (cleanedTitle && cleanedTitle !== trackTitle && mainArtist) {
+                        strategies.push({ name: 'Cleaned Title (No Album)', query: `${cleanedTitle} ${mainArtist}` });
+                    }
+
+                    // 7. Title + Album (Fallback)
+                    if (albumName) {
+                        strategies.push({ name: 'Title + Album', query: `${trackTitle} ${albumName}` });
+                    }
+
+                    // Execute strategies
+                    for (const strategy of strategies) {
+                        if (foundTrack) break;
+
                         try {
-                            const searchResults = await api.searchTracks(isrc);
+                            // console.log(`Attempting strategy: ${strategy.name}`);
+                            const searchResults = await api.searchTracks(strategy.query);
                             if (searchResults.items && searchResults.items.length > 0) {
                                 foundTrack = searchResults.items[0];
-                                console.log(`Found by ISRC: "${trackTitle}" -> ${isrc}`);
+                                console.log(`Found via ${strategy.name}: "${trackTitle}"`);
                             }
                         } catch (e) {
-                            console.warn(`ISRC search failed for ${isrc}:`, e);
-                        }
-                    }
-
-                    // 1. Initial Search: Title + All Artists (+ Album if available)
-                    if (!foundTrack) {
-                        let searchQuery = `${trackTitle} ${artistNames}`;
-                        if (albumName) searchQuery += ` ${albumName}`;
-                        let searchResults = await api.searchTracks(searchQuery);
-
-                        if (searchResults.items && searchResults.items.length > 0) {
-                            foundTrack = searchResults.items[0];
-                        }
-                    }
-
-                    // 2. Retry with Main Artist only
-                    if (!foundTrack && artistNames) {
-                        const mainArtist = artistNames.split(',')[0].trim();
-                        if (mainArtist && mainArtist !== artistNames) {
-                            let searchQuery = `${trackTitle} ${mainArtist}`;
-                            if (albumName) searchQuery += ` ${albumName}`;
-                            console.log(`Retry 1 (Main Artist): ${searchQuery}`);
-                            const searchResults = await api.searchTracks(searchQuery);
-                            if (searchResults.items && searchResults.items.length > 0) {
-                                foundTrack = searchResults.items[0];
-                            }
-                        }
-                    }
-
-                    // 3. Retry with Cleaned Title (if " - " exists) + Main Artist
-                    if (!foundTrack && trackTitle.includes(' - ')) {
-                        const mainArtist = (artistNames || '').split(',')[0].trim();
-                        const cleanedTitle = trackTitle.split(' - ')[0].trim();
-                        if (cleanedTitle) {
-                            let searchQuery = `${cleanedTitle} ${mainArtist}`;
-                            if (albumName) searchQuery += ` ${albumName}`;
-                            console.log(`Retry 2 (Cleaned Title): ${searchQuery}`);
-                            const searchResults = await api.searchTracks(searchQuery);
-                            if (searchResults.items && searchResults.items.length > 0) {
-                                foundTrack = searchResults.items[0];
-                            }
-                        }
-                    }
-
-                    // 4. Retry with Title + Album only (useful when artist formatting is weird)
-                    if (!foundTrack && albumName) {
-                        const searchQuery = `${trackTitle} ${albumName}`;
-                        console.log(`Retry 3 (Album): ${searchQuery}`);
-                        const searchResults = await api.searchTracks(searchQuery);
-                        if (searchResults.items && searchResults.items.length > 0) {
-                            foundTrack = searchResults.items[0];
+                            console.warn(`Search strategy ${strategy.name} failed:`, e);
                         }
                     }
 
