@@ -1,3 +1,5 @@
+name: Build desktop apps
+
 on:
   push:
     branches:
