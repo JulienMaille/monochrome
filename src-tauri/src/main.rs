@@ -228,6 +228,7 @@ pub fn run() {
             )
             .title("Monochrome")
             .inner_size(1200.0, 800.0)
+            .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36")
             .initialization_script(include_str!("../discord-init.js"))
             .on_download(|webview, event| {
                 if let tauri::webview::DownloadEvent::Requested { destination, .. } = event {
