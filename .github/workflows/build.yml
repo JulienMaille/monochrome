@@ -61,3 +61,52 @@ jobs:
           path: |
             src-tauri/target/release/bundle/deb/*.deb
             src-tauri/target/release/bundle/appimage/*.AppImage
+
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: setup java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: setup rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
+
+      - name: install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+          npm install
+
+      - name: setup android sdk
+        uses: android-actions/setup-android@v3
+
+      - name: install ndk
+        run: sdkmanager "ndk;26.1.10909125"
+
+      - name: init android
+        run: |
+          export NDK_HOME=$ANDROID_HOME/ndk/26.1.10909125
+          npx tauri android init --ci
+
+      - name: build android
+        run: |
+          export NDK_HOME=$ANDROID_HOME/ndk/26.1.10909125
+          npx tauri android build --apk
+
+      - name: upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-android
+          path: src-tauri/gen/android/app/build/outputs/apk/**/*.apk

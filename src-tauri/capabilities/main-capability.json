@@ -12,6 +12,6 @@
   ],
   "platforms": ["windows", "macOS", "linux"],
   "remote": {
-    "urls": ["https://monochrome.samidy.com"]
+    "urls": ["https://monochrome.samidy.com", "https://accounts.google.com", "https://*.firebaseapp.com"]
   }
 }
