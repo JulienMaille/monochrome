@@ -1,6 +1,6 @@
 {
   "identifier": "main-capability",
-  "windows": ["main", "popup-*"],
+  "windows": ["*"],
   "permissions": [
     "core:default",
     "core:window:default",
@@ -12,6 +12,13 @@
   ],
   "platforms": ["windows", "macOS", "linux"],
   "remote": {
-    "urls": ["https://monochrome.samidy.com", "https://accounts.google.com", "https://*.firebaseapp.com"]
+    "urls": [
+      "https://monochrome.samidy.com",
+      "https://monochrome.samidy.com/*",
+      "https://accounts.google.com",
+      "https://accounts.google.com/*",
+      "https://*.firebaseapp.com",
+      "https://*.firebaseapp.com/*"
+    ]
   }
 }
