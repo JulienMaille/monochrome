@@ -103,7 +103,7 @@ jobs:
       - name: build android
         run: |
           export NDK_HOME=$ANDROID_HOME/ndk/26.1.10909125
-          npx tauri android build --apk
+          npx tauri android build --apk true
 
       - name: upload artifacts
         uses: actions/upload-artifact@v4
