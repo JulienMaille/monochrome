@@ -1,6 +1,7 @@
 {
   "identifier": "main-capability",
-  "windows": ["*"],
+  "description": "Capability for the main window and auth popups",
+  "windows": ["main", "*"],
   "permissions": [
     "core:default",
     "core:window:default",
@@ -10,7 +11,7 @@
     "global-shortcut:default",
     "shell:allow-open"
   ],
-  "platforms": ["windows", "macOS", "linux"],
+  "platforms": ["windows", "macOS", "linux", "android", "iOS"],
   "remote": {
     "urls": [
       "https://monochrome.samidy.com",

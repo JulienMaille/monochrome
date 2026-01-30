@@ -4,11 +4,6 @@
     }
     window.discordRpcInjected = true;
 
-    // Helper to safely access Tauri API
-    function getTauri() {
-        return window.__TAURI__;
-    }
-
     const originalOpen = window.open;
     window.open = function(url, target, features) {
         const urlStr = String(url || '');
@@ -17,18 +12,17 @@
                                urlStr.includes('discord.com');
 
         if (isExternalAuth) {
-            const tauri = getTauri();
-            if (tauri && tauri.shell && typeof tauri.shell.open === 'function') {
-                tauri.shell.open(urlStr);
-                return { 
-                    close: () => {}, 
-                    focus: () => {}, 
-                    blur: () => {}, 
-                    postMessage: () => {},
-                    closed: false,
-                    location: { href: urlStr }
-                };
+            if (window.__TAURI__?.shell) {
+                window.__TAURI__.shell.open(urlStr);
             }
+            return { 
+                close: () => {}, 
+                focus: () => {}, 
+                blur: () => {}, 
+                postMessage: () => {},
+                closed: false,
+                location: { href: urlStr }
+            };
         }
         
         return originalOpen.apply(window, arguments);
@@ -38,39 +32,26 @@
     let debounceTimer;
     let lastState = {};
 
-    async function invoke(cmd, args) {
-        const tauri = getTauri();
-        try {
-            if (tauri && tauri.core && typeof tauri.core.invoke === 'function') {
-                return await tauri.core.invoke(cmd, args);
-            }
-            if (tauri && tauri.tauri && typeof tauri.tauri.invoke === 'function') {
-                return await tauri.tauri.invoke(cmd, args);
-            }
-        } catch (e) {
-            console.warn(`[Tauri] Invoke failed for ${cmd}:`, e);
+    function invoke(cmd, args) {
+        // Safety check for Tauri API availability
+        if (window.__TAURI__?.core?.invoke) {
+            return window.__TAURI__.core.invoke(cmd, args);
+        }
+        if (window.__TAURI__?.tauri?.invoke) {
+            return window.__TAURI__.tauri.invoke(cmd, args);
         }
         return Promise.reject("Tauri API not ready");
     }
 
-    function setupEventListeners() {
-        const tauri = getTauri();
-        if (tauri && tauri.event && typeof tauri.event.listen === 'function') {
-            tauri.event.listen('media-toggle', () => {
-                const audio = document.getElementById('audio-player');
-                if (audio) {
-                    if (audio.paused) audio.play(); else audio.pause();
-                }
-            }).catch(e => {
-                if (!e.includes('ACL')) console.warn('[Tauri] Event listen failed:', e);
-            });
-        } else {
-            // Retry later if not ready
-            setTimeout(setupEventListeners, 1000);
-        }
+    // Safety check for event listen
+    if (window.__TAURI__?.event?.listen) {
+        window.__TAURI__.event.listen('media-toggle', () => {
+            const audio = document.getElementById('audio-player');
+            if (audio) {
+                if (audio.paused) audio.play(); else audio.pause();
+            }
+        }).catch(() => {});
     }
-
-    setupEventListeners();
 
     function updateRPC(force = false) {
         const titleEl = document.querySelector('.now-playing-bar .title');

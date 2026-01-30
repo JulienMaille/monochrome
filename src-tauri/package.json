@@ -5,6 +5,7 @@
     "description": "[<img src=\"https://github.com/SamidyFR/monochrome/blob/main/assets/512.png?raw=true\" alt=\"Monochrome Logo\">](https://monochrome.samidy.com)",
     "main": "sw.js",
     "scripts": {
+        "tauri": "tauri",
         "dev": "vite",
         "build": "vite build",
         "preview": "vite preview",
