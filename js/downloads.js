@@ -11,6 +11,7 @@ import {
     getExtensionFromBlob,
 } from './utils.js';
 import { lyricsSettings, bulkDownloadSettings } from './storage.js';
+import { saveBlobToFolder } from './desktop.js';
 import { addMetadataToAudio } from './metadata.js';
 import { DashDownloader } from './dash-downloader.js';
 
@@ -247,6 +248,27 @@ async function downloadTrackBlob(track, quality, api, lyricsManager = null, sign
 }
 
 function triggerDownload(blob, filename) {
+    // Try Tauri download first
+    if (window.__TAURI__) {
+        saveBlobToFolder(blob, filename).then(success => {
+            if (success) {
+                // Show a small toast or log?
+                // showNotification(`Saved to ${filename}`); // Reuse existing notif logic if possible
+                return;
+            }
+            // Fallback
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+        return;
+    }
+
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;

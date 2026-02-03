@@ -9,6 +9,7 @@ import {
     createQualityBadgeHTML,
 } from './utils.js';
 import { queueManager, replayGainSettings } from './storage.js';
+import { updateDesktopPresence } from './desktop.js';
 
 export class Player {
     constructor(audioElement, api, quality = 'HI_RES_LOSSLESS') {
@@ -308,6 +309,7 @@ export class Player {
         this.updatePlayingTrackIndicator();
         this.updateMediaSession(track);
         this.updateMediaSessionPlaybackState();
+        updateDesktopPresence(track);
 
         try {
             let streamUrl;

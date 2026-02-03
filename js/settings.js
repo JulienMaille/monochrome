@@ -20,6 +20,7 @@ import { db } from './db.js';
 import { authManager } from './accounts/auth.js';
 import { syncManager } from './accounts/pocketbase.js';
 import { saveFirebaseConfig, clearFirebaseConfig } from './accounts/config.js';
+import { setDownloadFolder } from './desktop.js';
 
 export function initializeSettings(scrobbler, player, api, ui) {
     // Initialize account system UI & Settings
@@ -644,6 +645,23 @@ export function initializeSettings(scrobbler, player, api, ui) {
     const customDbSaveBtn = document.getElementById('custom-db-save');
     const customDbResetBtn = document.getElementById('custom-db-reset');
     const customDbCancelBtn = document.getElementById('custom-db-cancel');
+
+    if (window.__TAURI__) {
+        // Find the download settings section
+        const downloadQualitySetting = document.getElementById('download-quality-setting');
+        if (downloadQualitySetting) {
+            const container = downloadQualitySetting.closest('.settings-section');
+            if (container) {
+                const btn = document.createElement('button');
+                btn.className = 'btn-secondary';
+                btn.textContent = 'Set Download Folder (Desktop)';
+                btn.style.marginTop = '1rem';
+                btn.style.width = '100%';
+                btn.onclick = setDownloadFolder;
+                container.appendChild(btn);
+            }
+        }
+    }
 
     if (customDbBtn && customDbModal) {
         customDbBtn.addEventListener('click', () => {
