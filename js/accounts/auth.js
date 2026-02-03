@@ -78,7 +78,7 @@ export class AuthManager {
                     return result.user;
                 } else {
                     // Fallback to Popup (which works due to UA spoofing)
-                    console.log("No Google Client ID set for native flow, falling back to popup with UA spoofing.");
+                    console.log('No Google Client ID set for native flow, falling back to popup with UA spoofing.');
                     const result = await signInWithPopup(auth, provider);
                     return result.user;
                 }
