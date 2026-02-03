@@ -17,49 +17,49 @@ async function initStore() {
 
 // Initialize Discord Presence
 if (IS_TAURI) {
-    console.log('Monochrome Desktop: Tauri environment detected.');
+    console.log("Monochrome Desktop: Tauri environment detected.");
     initStore().catch(console.error);
 
     // Attempt to clear presence or set initial state
     invoke('update_discord_presence', {
-        details: 'Idling',
-        stateText: 'Monochrome Music',
-        largeImage: 'icon',
-        smallImage: null,
-    }).catch((e) => console.error('Failed to update Discord presence:', e));
+        details: "Idling",
+        stateText: "Monochrome Music",
+        largeImage: "icon",
+        smallImage: null
+    }).catch(e => console.error("Failed to update Discord presence:", e));
 }
 
 export function updateDesktopPresence(track) {
     if (!IS_TAURI || !track) return;
 
-    const title = track.title || 'Unknown Title';
-    const artist = track.artist || (track.artists ? track.artists[0] : 'Unknown Artist');
+    const title = track.title || "Unknown Title";
+    const artist = track.artist || (track.artists ? track.artists[0] : "Unknown Artist");
 
     invoke('update_discord_presence', {
         details: title,
         stateText: `by ${artist}`,
-        largeImage: 'logo',
-        smallImage: null,
-    }).catch((e) => console.error('Failed to update Discord presence:', e));
+        largeImage: "logo",
+        smallImage: null
+    }).catch(e => console.error("Failed to update Discord presence:", e));
 }
 
 export function initializeDesktopEvents(player) {
     if (!IS_TAURI || !player) return;
 
-    console.log('Initializing Desktop Media Keys...');
+    console.log("Initializing Desktop Media Keys...");
 
     listen('media-play-pause', () => {
-        console.log('Desktop: Play/Pause');
+        console.log("Desktop: Play/Pause");
         player.handlePlayPause();
     });
 
     listen('media-next-track', () => {
-        console.log('Desktop: Next');
+        console.log("Desktop: Next");
         player.playNext();
     });
 
     listen('media-prev-track', () => {
-        console.log('Desktop: Prev');
+        console.log("Desktop: Prev");
         player.playPrev();
     });
 }
@@ -72,7 +72,7 @@ export async function setDownloadFolder() {
         const selected = await open({
             directory: true,
             multiple: false,
-            defaultPath: defaultPath || undefined,
+            defaultPath: defaultPath || undefined
         });
 
         if (selected) {
@@ -82,8 +82,8 @@ export async function setDownloadFolder() {
             return selected;
         }
     } catch (e) {
-        console.error('Failed to set download folder:', e);
-        alert('Failed to set download folder: ' + e.message);
+        console.error("Failed to set download folder:", e);
+        alert("Failed to set download folder: " + e.message);
     }
 }
 
@@ -106,7 +106,7 @@ export async function saveBlobToFolder(blob, filename) {
         await writeFile(path, uint8Array);
         return true;
     } catch (e) {
-        console.error('Failed to save via Tauri:', e);
+        console.error("Failed to save via Tauri:", e);
         return false;
     }
 }
@@ -140,13 +140,12 @@ export async function loginWithGoogleNative(clientId) {
     const codeVerifier = await generateCodeVerifier();
     const codeChallenge = await generateCodeChallenge(codeVerifier);
 
-    console.log('Starting Auth Server on port', port);
+    console.log("Starting Auth Server on port", port);
     // Start local server to catch the callback
     await invoke('start_auth_server', { port });
 
     // Construct Auth URL
-    const authUrl =
-        `https://accounts.google.com/o/oauth2/v2/auth?` +
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
         `client_id=${encodeURIComponent(clientId)}&` +
         `redirect_uri=${encodeURIComponent(redirectUri)}&` +
         `response_type=code&` +
@@ -161,7 +160,7 @@ export async function loginWithGoogleNative(clientId) {
     return new Promise((resolve, reject) => {
         const unlistenPromise = listen('google-auth-code', async (event) => {
             const code = event.payload;
-            console.log('Received Auth Code');
+            console.log("Received Auth Code");
 
             // Exchange code for token
             try {
@@ -173,26 +172,26 @@ export async function loginWithGoogleNative(clientId) {
                         code: code,
                         code_verifier: codeVerifier,
                         redirect_uri: redirectUri,
-                        grant_type: 'authorization_code',
-                    }),
+                        grant_type: 'authorization_code'
+                    })
                 });
 
                 const tokens = await tokenResponse.json();
                 if (tokens.id_token) {
                     resolve(tokens.id_token);
                 } else {
-                    reject(new Error('No ID token returned: ' + JSON.stringify(tokens)));
+                    reject(new Error("No ID token returned: " + JSON.stringify(tokens)));
                 }
             } catch (e) {
                 reject(e);
             } finally {
-                // unlistenPromise.then(unlisten => unlisten()); // Tauri v2 listen returns a promise resolving to unlisten function
+               // unlistenPromise.then(unlisten => unlisten()); // Tauri v2 listen returns a promise resolving to unlisten function
             }
         });
 
         // Timeout after 2 minutes
         setTimeout(() => {
-            reject(new Error('Login timed out'));
+            reject(new Error("Login timed out"));
         }, 120000);
     });
 }
