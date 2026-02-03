@@ -9,6 +9,9 @@ use discord_rich_presence::{activity, DiscordIpc, DiscordIpcClient};
 use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::str::FromStr;
+use std::thread;
+use tiny_http::{Server, Response};
+use url::Url;
 
 struct DiscordState {
     client: Option<DiscordIpcClient>,
@@ -43,6 +46,28 @@ fn update_discord_presence(
     Ok(())
 }
 
+#[tauri::command]
+async fn start_auth_server(app_handle: tauri::AppHandle, port: u16) -> Result<(), String> {
+    let server = Server::http(format!("127.0.0.1:{}", port)).map_err(|e| e.to_string())?;
+
+    // Spawn a thread to handle the request so we don't block the main thread
+    thread::spawn(move || {
+        if let Ok(Some(request)) = server.recv() {
+            let url_string = format!("http://127.0.0.1:{}{}", port, request.url());
+            if let Ok(url) = Url::parse(&url_string) {
+                if let Some((_, code)) = url.query_pairs().find(|(key, _)| key == "code") {
+                    app_handle.emit("google-auth-code", code.to_string()).unwrap_or_default();
+                }
+            }
+
+            let response = Response::from_string("Login successful! You can close this window now and return to the application.");
+            let _ = request.respond(response);
+        }
+    });
+
+    Ok(())
+}
+
 fn main() {
     let discord_client = DiscordIpcClient::new("1345424754388402176").ok(); // Placeholder ID
     let discord_state = Arc::new(Mutex::new(DiscordState {
@@ -74,7 +99,7 @@ fn main() {
             }
         }).build())
         .manage(discord_state)
-        .invoke_handler(tauri::generate_handler![update_discord_presence])
+        .invoke_handler(tauri::generate_handler![update_discord_presence, start_auth_server])
         .setup(|app| {
             // System Tray
             let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;

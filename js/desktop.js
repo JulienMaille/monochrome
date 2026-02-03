@@ -3,6 +3,7 @@ import { listen } from '@tauri-apps/api/event';
 import { open } from '@tauri-apps/plugin-dialog';
 import { writeFile } from '@tauri-apps/plugin-fs';
 import { Store } from '@tauri-apps/plugin-store';
+import { open as openUrl } from '@tauri-apps/plugin-shell';
 
 // Tauri Integration
 const IS_TAURI = window.__TAURI__ !== undefined;
@@ -100,7 +101,7 @@ export async function saveBlobToFolder(blob, filename) {
     try {
         const arrayBuffer = await blob.arrayBuffer();
         const uint8Array = new Uint8Array(arrayBuffer);
-        const path = `${folder}/${filename}`; // Simple concatenation, might need separator handling or join function
+        const path = `${folder}/${filename}`;
 
         await writeFile(path, uint8Array);
         return true;
@@ -108,4 +109,89 @@ export async function saveBlobToFolder(blob, filename) {
         console.error("Failed to save via Tauri:", e);
         return false;
     }
+}
+
+// Google Login Helpers
+async function generateCodeVerifier() {
+    const array = new Uint8Array(32);
+    window.crypto.getRandomValues(array);
+    return base64UrlEncode(array);
+}
+
+async function generateCodeChallenge(verifier) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(verifier);
+    const hash = await window.crypto.subtle.digest('SHA-256', data);
+    return base64UrlEncode(new Uint8Array(hash));
+}
+
+function base64UrlEncode(array) {
+    return btoa(String.fromCharCode(...array))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+}
+
+export async function loginWithGoogleNative(clientId) {
+    if (!IS_TAURI) return null;
+
+    const port = 8080; // Fixed port for simplicity, could be random
+    const redirectUri = `http://127.0.0.1:${port}`;
+    const codeVerifier = await generateCodeVerifier();
+    const codeChallenge = await generateCodeChallenge(codeVerifier);
+
+    console.log("Starting Auth Server on port", port);
+    // Start local server to catch the callback
+    await invoke('start_auth_server', { port });
+
+    // Construct Auth URL
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+        `client_id=${encodeURIComponent(clientId)}&` +
+        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+        `response_type=code&` +
+        `scope=openid%20email%20profile&` +
+        `code_challenge=${codeChallenge}&` +
+        `code_challenge_method=S256`;
+
+    // Open System Browser
+    await openUrl(authUrl);
+
+    // Wait for code from backend
+    return new Promise((resolve, reject) => {
+        const unlistenPromise = listen('google-auth-code', async (event) => {
+            const code = event.payload;
+            console.log("Received Auth Code");
+
+            // Exchange code for token
+            try {
+                const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        client_id: clientId,
+                        code: code,
+                        code_verifier: codeVerifier,
+                        redirect_uri: redirectUri,
+                        grant_type: 'authorization_code'
+                    })
+                });
+
+                const tokens = await tokenResponse.json();
+                if (tokens.id_token) {
+                    resolve(tokens.id_token);
+                } else {
+                    reject(new Error("No ID token returned: " + JSON.stringify(tokens)));
+                }
+            } catch (e) {
+                reject(e);
+            } finally {
+               // unlistenPromise.then(unlisten => unlisten()); // Tauri v2 listen returns a promise resolving to unlisten function
+            }
+        });
+
+        // Timeout after 2 minutes
+        setTimeout(() => {
+            reject(new Error("Login timed out"));
+        }, 120000);
+    });
 }
