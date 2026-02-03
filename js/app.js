@@ -30,6 +30,7 @@ import { registerSW } from 'virtual:pwa-register';
 import './smooth-scrolling.js';
 import { readTrackMetadata } from './metadata.js';
 import { initTracker } from './tracker.js';
+import { initializeDesktopEvents } from './desktop.js';
 
 function initializeCasting(audioPlayer, castBtn) {
     if (!castBtn) return;
@@ -333,6 +334,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     );
     initializeUIInteractions(player, api, ui);
     initializeKeyboardShortcuts(player, audioPlayer);
+    initializeDesktopEvents(player);
 
     initTracker(player);
 
