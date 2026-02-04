@@ -133,6 +133,7 @@ function base64UrlEncode(array) {
 }
 
 export async function loginWithGoogleNative(clientId) {
+    console.log('loginWithGoogleNative called with clientId:', clientId);
     if (!IS_TAURI) return null;
 
     const port = 8080; // Fixed port for simplicity, could be random
