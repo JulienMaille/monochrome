@@ -39,6 +39,7 @@ export class AuthManager {
     }
 
     async signInWithGoogle() {
+        console.log('Initiating Google Sign-In...');
         if (!auth) {
             alert('Firebase is not configured. Please check console.');
             return;
@@ -46,48 +47,37 @@ export class AuthManager {
 
         try {
             if (window.__TAURI__) {
-                // Use Native Loopback Flow
-                // We need the Client ID. Firebase Auth usually handles this, but for manual flow we need it.
-                // It might be in the config or we fallback to a placeholder if not found.
-                // Assuming standard Google Client ID format.
-                // For now, we try to grab it from a known location or prompt.
-                // Since we don't have it explicitly in a variable, we might need the user to provide it once or find it in config.
-                // However, `provider.providerId` is just 'google.com'.
-                // If we cannot find it, we fallback to popup with the UA hack we implemented.
-                // BUT, the user requested the "Robust Solution".
-                // I will try to use the apiKey as a proxy or just use the UA hack as a fallback if this fails.
-                // Actually, let's look for the client_id in the config object if accessible.
-                // It is NOT exposed in the standard Firebase config object.
-                // Ideally, we should have `GOOGLE_CLIENT_ID` defined.
-                // For this implementation, I will assume a global variable or config value is set, or I will use a placeholder.
+                console.log('Tauri environment detected.');
 
-                // Hack: If we don't have the client ID, we can't use the robust loopback.
-                // But we implemented the User-Agent fix in tauri.conf.json.
-                // That IS a robust solution for wrappers.
-                // The "server loopback" is for *native* apps that don't want to use a webview for auth.
-                // Since this app IS a webview, the User-Agent fix is valid.
-                // However, I will add the code for the native flow and use the placeholder.
-
-                // NOTE: Using a placeholder will fail the request.
-                // I will only use the native flow if a specific setting is present.
                 const clientId = localStorage.getItem('google_client_id');
                 if (clientId) {
+                    console.log('Found Google Client ID, attempting native loopback flow...');
                     const idToken = await loginWithGoogleNative(clientId);
                     const credential = GoogleAuthProvider.credential(idToken);
                     const result = await signInWithCredential(auth, credential);
                     return result.user;
                 } else {
-                    // Fallback to Popup (which works due to UA spoofing)
-                    console.log('No Google Client ID set for native flow, falling back to popup with UA spoofing.');
-                    const result = await signInWithPopup(auth, provider);
-                    return result.user;
+                    // Fallback to Popup
+                    console.log('No Google Client ID found (localStorage "google_client_id"). Falling back to Popup flow.');
+                    alert('Using Popup Login. Please ensure a new window opens. If not, check if it was blocked.');
+
+                    try {
+                        const result = await signInWithPopup(auth, provider);
+                        console.log('Popup Login successful:', result.user);
+                        return result.user;
+                    } catch (popupError) {
+                        console.error('Popup Login failed:', popupError);
+                        alert(`Popup Login Failed: ${popupError.message}\n\nMake sure "google_client_id" is set in localStorage if you want to use the native flow.`);
+                        throw popupError;
+                    }
                 }
             } else {
+                console.log('Web environment detected. Using standard popup.');
                 const result = await signInWithPopup(auth, provider);
                 return result.user;
             }
         } catch (error) {
-            console.error('Login failed:', error);
+            console.error('Login process failed:', error);
             alert(`Login failed: ${error.message}`);
             throw error;
         }
