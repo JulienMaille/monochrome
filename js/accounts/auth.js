@@ -58,7 +58,9 @@ export class AuthManager {
                     return result.user;
                 } else {
                     // Fallback to Popup
-                    console.log('No Google Client ID found (localStorage "google_client_id"). Falling back to Popup flow.');
+                    console.log(
+                        'No Google Client ID found (localStorage "google_client_id"). Falling back to Popup flow.'
+                    );
                     alert('Using Popup Login. Please ensure a new window opens. If not, check if it was blocked.');
 
                     try {
@@ -67,7 +69,9 @@ export class AuthManager {
                         return result.user;
                     } catch (popupError) {
                         console.error('Popup Login failed:', popupError);
-                        alert(`Popup Login Failed: ${popupError.message}\n\nMake sure "google_client_id" is set in localStorage if you want to use the native flow.`);
+                        alert(
+                            `Popup Login Failed: ${popupError.message}\n\nMake sure "google_client_id" is set in localStorage if you want to use the native flow.`
+                        );
                         throw popupError;
                     }
                 }
