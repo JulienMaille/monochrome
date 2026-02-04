@@ -250,7 +250,7 @@ async function downloadTrackBlob(track, quality, api, lyricsManager = null, sign
 function triggerDownload(blob, filename) {
     // Try Tauri download first
     if (window.__TAURI__) {
-        saveBlobToFolder(blob, filename).then((success) => {
+        saveBlobToFolder(blob, filename).then(success => {
             if (success) {
                 // Show a small toast or log?
                 // showNotification(`Saved to ${filename}`); // Reuse existing notif logic if possible
