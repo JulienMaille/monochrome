@@ -1,9 +1,8 @@
 use tauri::{
     menu::{Menu, MenuItem},
-    tray::{TrayIconBuilder, TrayIconEvent},
-    Manager, Emitter,
+    tray::TrayIconBuilder,
+    Emitter,
 };
-use tauri_plugin_store::StoreExt;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState, Shortcut};
 use discord_rich_presence::{activity, DiscordIpc, DiscordIpcClient};
 use std::sync::{Arc, Mutex};
@@ -52,7 +51,7 @@ async fn start_auth_server(app_handle: tauri::AppHandle, port: u16) -> Result<()
 
     // Spawn a thread to handle the request so we don't block the main thread
     thread::spawn(move || {
-        if let Ok(Some(request)) = server.recv() {
+        if let Ok(request) = server.recv() {
             let url_string = format!("http://127.0.0.1:{}{}", port, request.url());
             if let Ok(url) = Url::parse(&url_string) {
                 if let Some((_, code)) = url.query_pairs().find(|(key, _)| key == "code") {
