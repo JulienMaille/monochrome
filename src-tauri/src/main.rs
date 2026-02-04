@@ -47,20 +47,35 @@ fn update_discord_presence(
 
 #[tauri::command]
 async fn start_auth_server(app_handle: tauri::AppHandle, port: u16) -> Result<(), String> {
+    println!("DEBUG: Attempting to start auth server on port {}", port);
     let server = Server::http(format!("127.0.0.1:{}", port)).map_err(|e| e.to_string())?;
+    println!("DEBUG: Auth server started successfully on port {}", port);
 
     // Spawn a thread to handle the request so we don't block the main thread
     thread::spawn(move || {
+        println!("DEBUG: Waiting for incoming auth request...");
         if let Ok(request) = server.recv() {
+            println!("DEBUG: Received request: {}", request.url());
             let url_string = format!("http://127.0.0.1:{}{}", port, request.url());
             if let Ok(url) = Url::parse(&url_string) {
                 if let Some((_, code)) = url.query_pairs().find(|(key, _)| key == "code") {
-                    app_handle.emit("google-auth-code", code.to_string()).unwrap_or_default();
+                    println!("DEBUG: Auth code found! Emitting event to frontend...");
+                    if let Err(e) = app_handle.emit("google-auth-code", code.to_string()) {
+                        println!("DEBUG: Failed to emit event: {}", e);
+                    } else {
+                        println!("DEBUG: Event emitted successfully.");
+                    }
+                } else {
+                    println!("DEBUG: No 'code' query parameter found in URL.");
                 }
+            } else {
+                println!("DEBUG: Failed to parse URL: {}", url_string);
             }
 
             let response = Response::from_string("Login successful! You can close this window now and return to the application.");
             let _ = request.respond(response);
+        } else {
+             println!("DEBUG: Server failed to receive request.");
         }
     });
 
