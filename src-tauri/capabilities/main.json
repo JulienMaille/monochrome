@@ -7,10 +7,15 @@
         "core:default",
         "shell:allow-open",
         "dialog:default",
+        "dialog:allow-message",
+        "dialog:allow-ask",
+        "dialog:allow-confirm",
         "fs:default",
         "store:default",
         "global-shortcut:allow-register",
         "global-shortcut:allow-is-registered",
-        "global-shortcut:allow-unregister"
+        "global-shortcut:allow-unregister",
+        "core:window:allow-create",
+        "core:window:default"
     ]
 }
