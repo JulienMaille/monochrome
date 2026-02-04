@@ -118,13 +118,15 @@ fn main() {
                 .build(app)?;
 
             // Register Shortcuts
-            let shortcut_play = Shortcut::from_str("MediaPlayPause").unwrap();
-            let shortcut_next = Shortcut::from_str("MediaNextTrack").unwrap();
-            let shortcut_prev = Shortcut::from_str("MediaPrevTrack").unwrap();
-
-            app.global_shortcut().register(shortcut_play).ok();
-            app.global_shortcut().register(shortcut_next).ok();
-            app.global_shortcut().register(shortcut_prev).ok();
+            if let Ok(shortcut_play) = Shortcut::from_str("MediaPlayPause") {
+                app.global_shortcut().register(shortcut_play).ok();
+            }
+            if let Ok(shortcut_next) = Shortcut::from_str("MediaNextTrack") {
+                app.global_shortcut().register(shortcut_next).ok();
+            }
+            if let Ok(shortcut_prev) = Shortcut::from_str("MediaPrevTrack") {
+                app.global_shortcut().register(shortcut_prev).ok();
+            }
 
             Ok(())
         })
