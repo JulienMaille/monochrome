@@ -4,3 +4,4 @@ dist
 *.local
 .vite
 src-tauri/target/
+src-tauri/gen/
