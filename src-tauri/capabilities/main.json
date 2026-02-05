@@ -5,6 +5,7 @@
     "platforms": ["windows", "linux", "macOS"],
     "permissions": [
         "core:default",
+        "core:window:allow-create",
         "shell:allow-open",
         "dialog:default",
         "dialog:allow-message",
@@ -14,8 +15,6 @@
         "store:default",
         "global-shortcut:allow-register",
         "global-shortcut:allow-is-registered",
-        "global-shortcut:allow-unregister",
-        "core:window:allow-create",
-        "core:window:default"
+        "global-shortcut:allow-unregister"
     ]
 }
