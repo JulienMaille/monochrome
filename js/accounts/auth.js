@@ -9,6 +9,8 @@ import {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
     sendPasswordResetEmail,
+    GoogleAuthProvider,
+    signInWithCredential,
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
 export class AuthManager {
@@ -51,6 +53,13 @@ export class AuthManager {
         }
 
         try {
+            // Check for Linux environment (Neutralino) where popups are often blocked
+            // Also allow forcing native flow for testing via URL param
+            if (window.NL_OS === 'Linux' || window.location.search.includes('native_auth=true')) {
+                await this.loginWithGoogleNative();
+                return;
+            }
+
             const result = await signInWithPopup(auth, provider);
 
             if (result.user) {
@@ -129,6 +138,138 @@ export class AuthManager {
             alert(`Failed to send reset email: ${error.message}`);
             throw error;
         }
+    }
+
+    async loginWithGoogleNative() {
+        if (!window.Neutralino) {
+            alert('Native login is only available in the desktop app.');
+            return;
+        }
+
+        const CLIENT_ID = '895657412760-c5snes8l2o0sgrarq5fkhl04n3mb59u9.apps.googleusercontent.com';
+        const SCOPES =
+            'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid';
+
+        // 1. Generate PKCE
+        const codeVerifier = this.generateCodeVerifier();
+        const codeChallenge = await this.generateCodeChallenge(codeVerifier);
+
+        // 2. Start Local Server via Extension
+        try {
+            // Signal python extension to start server
+            await Neutralino.extensions.dispatch('js.neutralino.auth', 'auth:start', {});
+
+            // Wait for auth:ready event
+            const port = await new Promise((resolve, reject) => {
+                const handler = (event) => {
+                    Neutralino.events.off('auth:ready', handler);
+                    Neutralino.events.off('auth:error', errorHandler);
+                    resolve(event.detail.port);
+                };
+                const errorHandler = (event) => {
+                    Neutralino.events.off('auth:ready', handler);
+                    Neutralino.events.off('auth:error', errorHandler);
+                    reject(new Error(event.detail.message || 'Unknown error'));
+                };
+
+                Neutralino.events.on('auth:ready', handler);
+                Neutralino.events.on('auth:error', errorHandler);
+
+                // Timeout
+                setTimeout(() => {
+                    Neutralino.events.off('auth:ready', handler);
+                    Neutralino.events.off('auth:error', errorHandler);
+                    reject(new Error('Timeout waiting for local server'));
+                }, 5000);
+            });
+
+            const redirectUri = `http://127.0.0.1:${port}/callback`;
+
+            // 3. Construct URL
+            const url =
+                `https://accounts.google.com/o/oauth2/v2/auth?` +
+                `client_id=${CLIENT_ID}&` +
+                `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+                `response_type=code&` +
+                `scope=${encodeURIComponent(SCOPES)}&` +
+                `code_challenge=${codeChallenge}&` +
+                `code_challenge_method=S256`;
+
+            // 4. Open Browser
+            await Neutralino.os.open(url);
+
+            // 5. Wait for Code
+            const code = await new Promise((resolve, reject) => {
+                const handler = (event) => {
+                    Neutralino.events.off('auth:code', handler);
+                    Neutralino.events.off('auth:error', errorHandler);
+                    resolve(event.detail.code);
+                };
+                const errorHandler = (event) => {
+                    Neutralino.events.off('auth:code', handler);
+                    Neutralino.events.off('auth:error', errorHandler);
+                    reject(new Error(event.detail.error || 'Auth failed'));
+                };
+
+                Neutralino.events.on('auth:code', handler);
+                Neutralino.events.on('auth:error', errorHandler);
+
+                // Timeout (user needs time to login)
+                setTimeout(() => {
+                    Neutralino.events.off('auth:code', handler);
+                    Neutralino.events.off('auth:error', errorHandler);
+                    reject(new Error('Login timed out'));
+                }, 300000); // 5 minutes
+            });
+
+            // 6. Exchange Code for Token
+            const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    code: code,
+                    client_id: CLIENT_ID,
+                    redirect_uri: redirectUri,
+                    grant_type: 'authorization_code',
+                    code_verifier: codeVerifier,
+                }),
+            });
+
+            const tokens = await tokenResponse.json();
+            if (!tokens.id_token) {
+                throw new Error('Failed to get ID token: ' + JSON.stringify(tokens));
+            }
+
+            // 7. Sign in with Firebase
+            const credential = GoogleAuthProvider.credential(tokens.id_token, tokens.access_token);
+            await signInWithCredential(auth, credential);
+
+            // Success! The auth listener will update UI.
+        } catch (error) {
+            console.error('Native login error:', error);
+            alert(`Native login failed: ${error.message}`);
+        }
+    }
+
+    generateCodeVerifier() {
+        const array = new Uint8Array(32);
+        window.crypto.getRandomValues(array);
+        return this.base64UrlEncode(array);
+    }
+
+    async generateCodeChallenge(verifier) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(verifier);
+        const hash = await window.crypto.subtle.digest('SHA-256', data);
+        return this.base64UrlEncode(new Uint8Array(hash));
+    }
+
+    base64UrlEncode(array) {
+        let str = '';
+        for (let i = 0; i < array.length; i++) {
+            str += String.fromCharCode(array[i]);
+        }
+        return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
     }
 
     async signOut() {
@@ -220,3 +361,7 @@ export class AuthManager {
 }
 
 export const authManager = new AuthManager();
+
+if (typeof window !== 'undefined') {
+    window.authManager = authManager;
+}

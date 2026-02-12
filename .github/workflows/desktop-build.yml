@@ -2,6 +2,8 @@ name: Desktop Build
 
 on:
   push:
+    branches: [main, neutralino, 'fix/linux-google-login*']
+  pull_request:
     branches: [main, neutralino]
   workflow_dispatch:
 

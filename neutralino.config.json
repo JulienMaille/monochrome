@@ -42,7 +42,12 @@
             "commandLinux": "python3 \"${NL_PATH}/extensions/js.neutralino.discordrpc/bridge.py\"",
             "commandMac": "python3 \"${NL_PATH}/extensions/js.neutralino.discordrpc/bridge.py\"",
             "commandWindows": "powershell.exe -ExecutionPolicy Bypass -File \"${NL_PATH}/extensions/js.neutralino.discordrpc/bridge.ps1\""
+        },
+        {
+            "id": "js.neutralino.auth",
+            "commandLinux": "python3 \"${NL_PATH}/extensions/js.neutralino.auth/bridge.py\"",
+            "commandMac": "python3 \"${NL_PATH}/extensions/js.neutralino.auth/bridge.py\""
         }
     ],
-    "nativeAllowList": ["app.exit", "window.*", "extensions.*", "events.*", "os.*"]
+    "nativeAllowList": ["app.exit", "os.open", "window.*", "extensions.*", "events.*"]
 }
